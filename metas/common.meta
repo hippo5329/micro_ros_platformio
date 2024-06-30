@@ -29,12 +29,12 @@
         "microxrcedds_client": {
             "cmake-args": [
                 "-DUCLIENT_PIC=OFF",
-                "-DUCLIENT_PROFILE_UDP=OFF",
+                "-DUCLIENT_PROFILE_UDP=ON",
                 "-DUCLIENT_PROFILE_TCP=OFF",
-                "-DUCLIENT_PROFILE_DISCOVERY=OFF",
+                "-DUCLIENT_PROFILE_DISCOVERY=ON",
                 "-DUCLIENT_PROFILE_SERIAL=OFF",
                 "-UCLIENT_PROFILE_STREAM_FRAMING=ON",
-                "-DUCLIENT_PROFILE_CUSTOM_TRANSPORT=ON"
+                "-DUCLIENT_PROFILE_CUSTOM_TRANSPORT=OFF"
             ]
         }
     }
