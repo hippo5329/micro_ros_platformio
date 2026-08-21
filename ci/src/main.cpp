@@ -126,7 +126,7 @@ void setup() {
     &timer,
     &support,
     RCL_MS_TO_NS(100),
-    timer_callback));
+    (rcl_timer_callback_t) timer_callback));
 
   // create executor
   RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));

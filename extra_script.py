@@ -104,12 +104,13 @@ def build_microros(*args, **kwargs):
         env['CC'],
         env['CXX'],
         env['AR'],
-        "{} {} -DCLOCK_MONOTONIC=0 -D'__attribute__(x)='".format(' '.join(env['CFLAGS']), ' '.join(env['CCFLAGS'])),
+        "{} {} -Wno-error=implicit-function-declaration -DCLOCK_MONOTONIC=0 -D'__attribute__(x)='".format(' '.join(env['CFLAGS']), ' '.join(env['CCFLAGS'])),
         "{} {} -fno-rtti -DCLOCK_MONOTONIC=0 -D'__attribute__(x)='".format(' '.join(env['CXXFLAGS']), ' '.join(env['CCFLAGS']))
     )
 
     python_env_path = env['PROJECT_CORE_DIR'] + "/penv/bin/activate"
     builder = library_builder.Build(library_folder=main_path, packages_folder=extra_packages_path, distro=microros_distro, python_env=python_env_path)
+    builder.env = env.get("ENV", os.environ.copy())
     builder.run('{}/metas/{}'.format(main_path, selected_board_meta), cmake_toolchain.path, microros_user_meta)
 
     #######################################################

@@ -102,6 +102,7 @@ The target ROS 2 distribution can be configured with the `board_microros_distro 
   - `humble`
   - `jazzy`
   - `kilted` *(default value)*
+  - `lyrical`
   - `rolling`
 
 ### Transport configuration
