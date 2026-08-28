@@ -34,8 +34,8 @@ extra_packages_path = "{}/extra_packages".format(env['PROJECT_DIR'])
 
 selected_board_meta = boards_metas[board] if board in boards_metas else "colcon.meta"
 
-# Retrieve the required transport. Default kilted
-microros_distro = global_env.BoardConfig().get("microros_distro", "kilted")
+# Retrieve the required distro
+microros_distro = global_env.BoardConfig().get("microros_distro", "")
 
 # Retrieve the required transport. Default serial
 microros_transport = global_env.BoardConfig().get("microros_transport", "serial")

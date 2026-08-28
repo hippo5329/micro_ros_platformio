@@ -54,11 +54,23 @@ class Build:
         self.python_env = python_env
         self.env = None
 
+    def validate_distro(self):
+        if not self.distro or self.distro not in Sources.dev_environments:
+            valid_distros = ", ".join(sorted(Sources.dev_environments.keys()))
+            sys.stderr.write(
+                f"\n[ERROR] ROS_DISTRO / board_microros_distro is invalid or not defined: '{self.distro}'\n"
+                f"Please export ROS_DISTRO (e.g., 'export ROS_DISTRO=jazzy' or source your ROS 2 environment) "
+                f"or specify 'board_microros_distro' in platformio.ini.\n"
+                f"Supported ROS 2 distributions: {valid_distros}\n\n"
+            )
+            sys.exit(1)
+
     def run(self, meta, toolchain, user_meta = ""):
         if os.path.exists(self.library):
             print("micro-ROS already built")
             return
 
+        self.validate_distro()
         self.check_env()
         self.download_dev_environment()
         self.build_dev_environment()

@@ -1,9 +1,13 @@
 name: CI
 
 on:
+    push:
+      branches:
+        - '**'
     pull_request:
       branches:
         - '**'
+    workflow_dispatch:
     schedule:
       - cron: '59 23 * * *' # every day at 23:59 UTC
 
