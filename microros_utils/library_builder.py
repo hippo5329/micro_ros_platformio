@@ -107,7 +107,8 @@ class Build:
         print("Building micro-ROS dev dependencies")
         self.patch_dev_sources()
 
-        colcon_command = '. {} && colcon build --merge-install --packages-ignore-regex=.*_cpp --cmake-args -DPython3_EXECUTABLE=`which python` -DBUILD_TESTING=OFF'.format(self.python_env)
+        prefix = f". {self.python_env} && " if (self.python_env and os.path.exists(self.python_env)) else ""
+        colcon_command = '{}colcon build --merge-install --packages-ignore-regex=.*_cpp --cmake-args -DPython3_EXECUTABLE=`which python` -DBUILD_TESTING=OFF'.format(prefix)
         command = "cd {} && {}".format(self.dev_folder, colcon_command)
         result = run_cmd(command)
 
@@ -179,7 +180,8 @@ class Build:
             self.patch_mcu_sources()
 
         common_meta_path = self.library_folder + '/metas/common.meta'
-        colcon_command = '. {} && colcon build --merge-install --packages-ignore-regex=.*_cpp --metas {} {} {} --cmake-args -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=OFF  -DTHIRDPARTY=ON  -DBUILD_SHARED_LIBS=OFF  -DBUILD_TESTING=OFF  -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE={} -DPython3_EXECUTABLE=`which python`'.format(self.python_env, common_meta_path, meta_file, user_meta, toolchain_file)
+        prefix = f". {self.python_env} && " if (self.python_env and os.path.exists(self.python_env)) else ""
+        colcon_command = '{}colcon build --merge-install --packages-ignore-regex=.*_cpp --metas {} {} {} --cmake-args -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=OFF  -DTHIRDPARTY=ON  -DBUILD_SHARED_LIBS=OFF  -DBUILD_TESTING=OFF  -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE={} -DPython3_EXECUTABLE=`which python`'.format(prefix, common_meta_path, meta_file, user_meta, toolchain_file)
         command = "cd {} && . {}/install/setup.sh && {}".format(self.mcu_folder, self.dev_folder, colcon_command)
         result = run_cmd(command, env=self.env)
 
