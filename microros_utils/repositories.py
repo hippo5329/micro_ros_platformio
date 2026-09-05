@@ -224,7 +224,7 @@ class Sources:
             Repository("micro-CDR", "https://github.com/eProsima/micro-CDR", "lyrical", "ros2"),
             Repository("Micro-XRCE-DDS-Client", "https://github.com/eProsima/Micro-XRCE-DDS-Client", "lyrical", "ros2"),
             Repository("rcl", "https://github.com/micro-ROS/rcl", "lyrical"),
-            Repository("rclc", "https://github.com/ros2/rclc", "lyrical", "master"),
+            Repository("rclc", "https://github.com/ros2/rclc", "lyrical", "rolling"),
             Repository("micro_ros_utilities", "https://github.com/micro-ROS/micro_ros_utilities", "lyrical", "rolling"),
             Repository("rcutils", "https://github.com/micro-ROS/rcutils", "lyrical"),
             Repository("micro_ros_msgs", "https://github.com/micro-ROS/micro_ros_msgs", "lyrical", "rolling"),
