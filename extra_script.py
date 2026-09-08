@@ -50,6 +50,20 @@ env['SRC_FILTER'] += ' -<build/include/*>'
 #### Library custom targets ####
 ################################
 
+def shell_safe_flags(flags):
+    """Drop flags carrying shell metacharacters before they reach CMake.
+
+    These end up verbatim in CMAKE_C_FLAGS_INIT, which CMake writes into
+    build.make, which /bin/sh then parses. ESP32 Arduino core 3.x ships
+    -DCHIP_ADDRESS_RESOLVE_IMPL_INCLUDE_HEADER=<lib/.../AddressResolve_DefaultImpl.h>;
+    the angle brackets are redirection to the shell, so every single compile
+    fails with "Syntax error: ';' unexpected" and the real cause is invisible.
+    micro-ROS does not build the code these flags are for, so dropping them
+    costs nothing.
+    """
+    return [f for f in flags if not any(c in str(f) for c in "<>")]
+
+
 def clean_microros_callback(*args, **kwargs):
     library_path = main_path + '/libmicroros'
     build_path = main_path + '/build'
@@ -104,8 +118,10 @@ def build_microros(*args, **kwargs):
         env['CC'],
         env['CXX'],
         env['AR'],
-        "{} {} -Wno-error=implicit-function-declaration -DCLOCK_MONOTONIC=0 -D'__attribute__(x)='".format(' '.join(env['CFLAGS']), ' '.join(env['CCFLAGS'])),
-        "{} {} -fno-rtti -DCLOCK_MONOTONIC=0 -D'__attribute__(x)='".format(' '.join(env['CXXFLAGS']), ' '.join(env['CCFLAGS']))
+        "{} {} -Wno-error=implicit-function-declaration -DCLOCK_MONOTONIC=0 -D'__attribute__(x)='".format(
+            ' '.join(shell_safe_flags(env['CFLAGS'])), ' '.join(shell_safe_flags(env['CCFLAGS']))),
+        "{} {} -fno-rtti -DCLOCK_MONOTONIC=0 -D'__attribute__(x)='".format(
+            ' '.join(shell_safe_flags(env['CXXFLAGS'])), ' '.join(shell_safe_flags(env['CCFLAGS'])))
     )
 
     python_env_path = env['PROJECT_CORE_DIR'] + "/penv/bin/activate"
