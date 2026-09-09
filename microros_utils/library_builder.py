@@ -474,3 +474,47 @@ endmacro()
                 lcc = "#include <rcl/time.h>\n" + lcc.replace(target_lc, rep_lc)
                 with open(lc_c, "w") as f:
                     f.write(lcc)
+
+        # 5. Patch rcutils fault_injection.c for platforms that emulate atomics
+        # with a struct. ros2/rcutils dropped ATOMIC_VAR_INIT (#556) and then
+        # chose the initializer with an MSVC-only test (#587):
+        #
+        #     #if defined(_WIN32) && !defined(__MINGW64__)
+        #     ... = {-1};      // struct emulation
+        #     #else
+        #     ... = -1;        // real C11 atomics
+        #     #endif
+        #
+        # MSVC is not the only one. xtensa/newlib -- every ESP32 -- defines
+        # ATOMIC_VAR_INIT(value) as { .__val = (value) }, so the scalar arm is
+        # an "invalid initializer" and every Lyrical/Rolling ESP32 build stops
+        # in rcutils. No CMake option avoids it: RCUTILS_NO_64_ATOMIC only adds
+        # src/atomic_64bits.c, and src/testing/fault_injection.c is compiled
+        # unconditionally. A braced initializer is valid for the scalar case
+        # too, so it covers both without needing to know the platform.
+        fault_injection_c = os.path.join(
+            self.mcu_src_folder, "rcutils", "src", "testing", "fault_injection.c")
+        if os.path.exists(fault_injection_c):
+            with open(fault_injection_c, "r") as f:
+                fic = f.read()
+            # Match the platform split itself, not "= {-1};" -- that fragment
+            # also appears inside the block being replaced, so testing for it
+            # would report every unpatched file as already done.
+            target_fi = "#if defined(_WIN32) && !defined(__MINGW64__)"
+            if target_fi in fic:
+                start = fic.index(target_fi)
+                # Take the comment that explains the split with it, otherwise the
+                # patched file keeps claiming that everywhere but MSVC has real
+                # C11 atomics -- which is the misconception being fixed.
+                stale = "// The initializer must match the definition of _Atomic in"
+                if stale in fic[:start]:
+                    start = fic.index(stale)
+                end = fic.index("#endif", fic.index("= -1;", start)) + len("#endif")
+                fic = fic[:start] + (
+                    "// Patched by micro_ros_platformio: xtensa/newlib emulates atomics with\n"
+                    "// a struct just as MSVC does, and the braced initializer is correct for\n"
+                    "// the scalar case as well.\n"
+                    "static atomic_int_least64_t g_rcutils_fault_injection_count = {-1};"
+                ) + fic[end:]
+                with open(fault_injection_c, "w") as f:
+                    f.write(fic)
