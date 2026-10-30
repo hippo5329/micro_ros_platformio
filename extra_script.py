@@ -60,8 +60,29 @@ def shell_safe_flags(flags):
     fails with "Syntax error: ';' unexpected" and the real cause is invisible.
     micro-ROS does not build the code these flags are for, so dropping them
     costs nothing.
+
+    The flag lists are flattened first: espressif32 platform 8.x appends the
+    whole framework flag list to CFLAGS/CXXFLAGS as a single nested list.
     """
-    return [f for f in flags if not any(c in str(f) for c in "<>")]
+    return [f for f in map(str, env.Flatten(flags)) if not any(c in f for c in "<>")]
+
+
+def sdkconfig_include_flags():
+    """Include dirs holding the ESP-IDF sdkconfig.h, as -I flags.
+
+    ESP32 Arduino core 3.x headers (e.g. newlib's sys/reent.h) include
+    sdkconfig.h, which lives in a per-flash-mode directory that the framework
+    only adds to CPPPATH, not to the compiler flags passed to CMake. Other
+    frameworks have no sdkconfig.h, so this is a no-op for them.
+
+    idf_compat/ is put first so its sdkconfig.h wrapper is picked up before
+    the framework's own.
+    """
+    dirs = dict.fromkeys(env.subst(str(d)) for d in env.Flatten(env.get("CPPPATH", [])))
+    sdkconfig_dirs = [d for d in dirs if os.path.isfile(os.path.join(d, "sdkconfig.h"))]
+    if not sdkconfig_dirs:
+        return []
+    return ["-I" + d for d in [main_path + "/idf_compat"] + sdkconfig_dirs]
 
 
 def clean_microros_callback(*args, **kwargs):
@@ -113,15 +134,17 @@ def build_microros(*args, **kwargs):
 
     print("Configuring {} with transport {}".format(board, microros_transport))
 
+    common_flags = shell_safe_flags(env['CCFLAGS']) + sdkconfig_include_flags()
+
     cmake_toolchain = library_builder.CMakeToolchain(
         main_path + "/platformio_toolchain.cmake",
         env['CC'],
         env['CXX'],
         env['AR'],
         "{} {} -Wno-error=implicit-function-declaration -DCLOCK_MONOTONIC=0 -D'__attribute__(x)='".format(
-            ' '.join(shell_safe_flags(env['CFLAGS'])), ' '.join(shell_safe_flags(env['CCFLAGS']))),
+            ' '.join(shell_safe_flags(env['CFLAGS'])), ' '.join(common_flags)),
         "{} {} -fno-rtti -DCLOCK_MONOTONIC=0 -D'__attribute__(x)='".format(
-            ' '.join(shell_safe_flags(env['CXXFLAGS'])), ' '.join(shell_safe_flags(env['CCFLAGS'])))
+            ' '.join(shell_safe_flags(env['CXXFLAGS'])), ' '.join(common_flags))
     )
 
     python_env_path = env['PROJECT_CORE_DIR'] + "/penv/bin/activate"
